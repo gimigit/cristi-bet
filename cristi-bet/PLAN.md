@@ -1,5 +1,28 @@
 # ProphetAI Clone — Plan complet de execuție
 
+---
+
+## ✅ Status (actualizat 4 Mai 2026, 01:35)
+
+| Zi | Stare | Detalii |
+|---|---|---|
+| Z1 — Setup conturi + repo | ✅ COMPLET | Repo creat, build OK, GitHub pushed |
+| Z2 — Schema DB + pagini | ✅ COMPLET | Supabase tables + policies, toate paginile + API routes |
+| Z2.5 — Vercel deploy | ✅ FIXED | `vercel.json` creat (`framework: nextjs`), toate 7 env vars adăugate |
+| **Z3 — Python venv + test** | ⏸️ ÎN PAUZĂ | Oprește-te aici |
+| Z4+ — Cron jobs + launchd | 🔜 Urmează | După Z3 |
+| Z10+ — Deploy final | 🔜 Urmează | După toate scripturile |
+
+**LIVE:** https://cristi-bet.vercel.app ✅ (toate rutele funcționează)
+
+**Env vars Vercel:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ODDS_API_KEY`, `OPENAI_API_BASE`, `OPENAI_MODEL`, `NEXT_PUBLIC_APP_URL`
+
+**Stack curent:** Next.js 14 · Supabase · The Odds API · **Hermes** (OpenAI-compatible, `http://127.0.0.1:7352/v1`) · Vercel
+
+---
+
+
+
 > **Stack:** Next.js 14 · Supabase · The Odds API · Hermes Agent (OpenAI-compatible) · Vercel  
 > **URL final:** `prophet-clone.vercel.app` (gratuit)  
 > **Durată:** 2 săptămâni  
