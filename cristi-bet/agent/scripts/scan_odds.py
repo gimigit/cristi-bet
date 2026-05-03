@@ -7,7 +7,8 @@ Inspirat de ProphetAI original (Reddit):
 - Python validator ÎNAINTE de orice scriere în DB
 - Cost: ~$0.10-0.20 per apel pe Opus
 """
-import os, json, httpx, anthropic
+import os, json, httpx
+from openai import OpenAI
 from supabase import create_client
 from datetime import datetime, timezone
 from dotenv import load_dotenv
@@ -18,7 +19,9 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 ODDS_API_KEY   = os.environ.get("ODDS_API_KEY", "")
 SUPABASE_URL   = os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "")
 SUPABASE_KEY   = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
-ANTHROPIC_KEY  = os.environ.get("ANTHROPIC_API_KEY", "")
+OPENAI_BASE    = os.environ.get("OPENAI_API_BASE", "http://127.0.0.1:7352/v1")
+OPENAI_KEY     = os.environ.get("OPENAI_API_KEY", "not-needed")
+OPENAI_MODEL   = os.environ.get("OPENAI_MODEL", "claude-sonnet-4-7")
 
 BANKROLL_START  = 10.0
 MAX_STAKE_PCT   = 0.10
@@ -26,11 +29,11 @@ ODDS_MIN        = 1.70
 ODDS_MAX        = 2.80
 MAX_EXPOSURE_PCT = 0.60
 
-if not all([ODDS_API_KEY, SUPABASE_URL, SUPABASE_KEY, ANTHROPIC_KEY]):
+if not all([ODDS_API_KEY, SUPABASE_URL, SUPABASE_KEY]):
     raise RuntimeError("Missing required env vars — check .env.local")
 
-db     = create_client(SUPABASE_URL, SUPABASE_KEY)
-claude = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+db      = create_client(SUPABASE_URL, SUPABASE_KEY)
+client  = OpenAI(base_url=OPENAI_BASE, api_key=OPENAI_KEY)
 
 
 # ─────────────────────────────────────────────
@@ -209,13 +212,12 @@ Or if skipping:
   "reason_no_bet": "Brief reason why nothing qualifies today."
 }}"""
 
-    resp = claude.messages.create(
-        model="claude-opus-4-20250514",
+    resp = client.chat.completions.create(
+        model=OPENAI_MODEL,
         max_tokens=600,
         messages=[{"role": "user", "content": prompt}],
     )
-
-    text = resp.content[0].text.strip()
+    text = resp.choices[0].message.content.strip()
     # strip markdown fences
     if text.startswith("```"):
         parts = text.split("```")

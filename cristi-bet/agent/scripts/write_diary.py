@@ -3,7 +3,8 @@ cristi-bet — Daily Diary Writer
 Rulat de launchd o dată pe zi la 09:00 (via com.cristibet.diary.plist).
 Claude Sonnet scrie un rezumat narativ zilnic.
 """
-import os, json, anthropic
+import os, json
+from openai import OpenAI
 from supabase import create_client
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
@@ -12,13 +13,15 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 
 SUPABASE_URL   = os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "")
 SUPABASE_KEY   = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
-ANTHROPIC_KEY  = os.environ.get("ANTHROPIC_API_KEY", "")
+OPENAI_BASE    = os.environ.get("OPENAI_API_BASE", "http://127.0.0.1:7352/v1")
+OPENAI_KEY     = os.environ.get("OPENAI_API_KEY", "not-needed")
+OPENAI_MODEL   = os.environ.get("OPENAI_MODEL", "claude-sonnet-4-7")
 
-if not all([SUPABASE_URL, SUPABASE_KEY, ANTHROPIC_KEY]):
+if not all([SUPABASE_URL, SUPABASE_KEY]):
     raise RuntimeError("Missing required env vars — check .env.local")
 
-db     = create_client(SUPABASE_URL, SUPABASE_KEY)
-claude = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+db      = create_client(SUPABASE_URL, SUPABASE_KEY)
+client  = OpenAI(base_url=OPENAI_BASE, api_key=OPENAI_KEY)
 
 BANKROLL_START = 10.0
 
@@ -79,12 +82,12 @@ If net P&L positive: Start with something like "Well then." or "Not bad."
 If net P&L negative: Start more dejected — "Right then." or "A day to forget."
 If neutral (near zero): Deadpan acknowledgment."""
 
-    resp = claude.messages.create(
-        model="claude-sonnet-4-20250514",
+    resp = client.chat.completions.create(
+        model=OPENAI_MODEL,
         max_tokens=900,
         messages=[{"role": "user", "content": prompt}],
     )
-    return resp.content[0].text.strip()
+    return resp.choices[0].message.content.strip()
 
 
 def run():

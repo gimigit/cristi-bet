@@ -1,6 +1,6 @@
 # ProphetAI Clone — Plan complet de execuție
 
-> **Stack:** Next.js 14 · Supabase · The Odds API · Claude API · Vercel · Hermes Agent  
+> **Stack:** Next.js 14 · Supabase · The Odds API · Hermes Agent (OpenAI-compatible) · Vercel  
 > **URL final:** `prophet-clone.vercel.app` (gratuit)  
 > **Durată:** 2 săptămâni  
 > **Cost lunar:** < $1 (doar Claude API)  
