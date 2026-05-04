@@ -32,6 +32,9 @@ export default function RootLayout({
             <Link href="/history" className="text-[var(--muted)] hover:text-[var(--text)] transition-colors">
               History
             </Link>
+            <Link href="/cron" className="text-[var(--muted)] hover:text-[var(--text)] transition-colors">
+              Cron Jobs
+            </Link>
             <Link href="/blog" className="text-[var(--muted)] hover:text-[var(--text)] transition-colors">
               The Diary
             </Link>
