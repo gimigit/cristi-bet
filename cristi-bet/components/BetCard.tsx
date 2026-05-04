@@ -7,9 +7,10 @@ import { sportLabel } from '@/lib/stats'
 interface Props {
   bet: Bet
   compact?: boolean
+  onDelete?: (id: string) => void
 }
 
-export default function BetCard({ bet, compact = false }: Props) {
+export default function BetCard({ bet, compact = false, onDelete }: Props) {
   const [expanded, setExpanded] = useState(false)
 
   const statusColors: Record<string, string> = {
@@ -65,7 +66,7 @@ export default function BetCard({ bet, compact = false }: Props) {
 
   if (compact) {
     return (
-      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3 flex items-center justify-between gap-3">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3 flex items-center justify-between gap-3 relative group">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-mono text-[var(--muted)]">{bet.id}</span>
@@ -80,13 +81,22 @@ export default function BetCard({ bet, compact = false }: Props) {
           <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${badge}`}>
             {icon} {bet.status}
           </span>
+          {onDelete && (
+            <button
+              onClick={() => onDelete(bet.id)}
+              className="ml-1 text-xs text-[var(--lost)] hover:text-red-500 transition-colors"
+              title="Șterge pariul"
+            >
+              🗑️
+            </button>
+          )}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl overflow-hidden">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl overflow-hidden relative group">
       {/* Header */}
       <div className="flex items-start justify-between gap-3 p-4">
         <div className="flex-1 min-w-0">
@@ -105,6 +115,15 @@ export default function BetCard({ bet, compact = false }: Props) {
           <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${badge}`}>
             {icon} {bet.status}
           </span>
+          {onDelete && (
+            <button
+              onClick={() => onDelete(bet.id)}
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-[var(--lost)] hover:text-red-500"
+              title="Șterge pariul"
+            >
+              🗑️
+            </button>
+          )}
         </div>
       </div>
 
