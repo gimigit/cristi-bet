@@ -214,10 +214,13 @@ Or if skipping:
 
     resp = client.chat.completions.create(
         model=OPENAI_MODEL,
-        max_tokens=600,
+        max_tokens=2500,
         messages=[{"role": "user", "content": prompt}],
     )
-    text = resp.choices[0].message.content.strip()
+    text = resp.choices[0].message.content
+    if text is None:
+        raise ValueError(f"Model returned empty response. Refusal or block. Response: {resp}")
+    text = text.strip()
     # strip markdown fences
     if text.startswith("```"):
         parts = text.split("```")

@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS bankroll_history (
   recorded_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Bankroll de start: €10
-INSERT INTO bankroll_history (balance) VALUES (10.00);
+INSERT INTO bankroll_history (balance) VALUES (10.00)
+ON CONFLICT DO NOTHING;
 
 -- =============================================
 -- CONFIG — sporturi active
@@ -39,7 +39,6 @@ CREATE TABLE IF NOT EXISTS config (
   value JSONB NOT NULL
 );
 
--- Sporturi active implicit
 INSERT INTO config (key, value) VALUES
   ('active_sports', '["soccer_epl", "basketball_nba"]'::jsonb)
 ON CONFLICT (key) DO NOTHING;
@@ -52,12 +51,18 @@ ALTER TABLE bets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bankroll_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE config ENABLE ROW LEVEL SECURITY;
 
--- Public read
+-- Drop existing policies first (safe to run multiple times)
+DROP POLICY IF EXISTS "public_read_bets" ON bets;
+DROP POLICY IF EXISTS "public_read_bankroll" ON bankroll_history;
+DROP POLICY IF EXISTS "public_read_config" ON config;
+DROP POLICY IF EXISTS "service_write_bets" ON bets;
+DROP POLICY IF EXISTS "service_write_bankroll" ON bankroll_history;
+DROP POLICY IF EXISTS "service_write_config" ON config;
+
+-- Recreate policies
 CREATE POLICY "public_read_bets" ON bets FOR SELECT USING (true);
 CREATE POLICY "public_read_bankroll" ON bankroll_history FOR SELECT USING (true);
 CREATE POLICY "public_read_config" ON config FOR SELECT USING (true);
-
--- Service role write
 CREATE POLICY "service_write_bets" ON bets FOR ALL USING (auth.role() = 'service_role');
 CREATE POLICY "service_write_bankroll" ON bankroll_history FOR ALL USING (auth.role() = 'service_role');
 CREATE POLICY "service_write_config" ON config FOR ALL USING (auth.role() = 'service_role');
@@ -77,6 +82,8 @@ CREATE TABLE IF NOT EXISTS diary (
 );
 
 ALTER TABLE diary ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "public_read_diary" ON diary;
+DROP POLICY IF EXISTS "service_write_diary" ON diary;
 CREATE POLICY "public_read_diary" ON diary FOR SELECT USING (true);
 CREATE POLICY "service_write_diary" ON diary FOR ALL USING (auth.role() = 'service_role');
 

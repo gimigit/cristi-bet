@@ -9,8 +9,8 @@
 | Z1 — Setup conturi + repo | ✅ COMPLET | Repo creat, build OK, GitHub pushed |
 | Z2 — Schema DB + pagini | ✅ COMPLET | Supabase tables + policies, toate paginile + API routes |
 | Z2.5 — Vercel deploy | ✅ FIXED | `vercel.json` creat (`framework: nextjs`), toate 7 env vars adăugate |
-| **Z3 — Python venv + test** | ⏸️ ÎN PAUZĂ | Oprește-te aici |
-| Z4+ — Cron jobs + launchd | 🔜 Urmează | După Z3 |
+| **Z3 — Python venv + test** | ✅ COMPLET | venv creat, deps instalate, toate 3 scripturi testate + key fix + max_tokens fix |
+| **Z4 — Cron jobs** | ✅ COMPLET | 3 job-uri Hermes active (scan: 3h, settle: 10/13/16/22h, diary: 9h zilnic) |
 | Z10+ — Deploy final | 🔜 Urmează | După toate scripturile |
 
 **LIVE:** https://cristi-bet.vercel.app ✅ (toate rutele funcționează)
