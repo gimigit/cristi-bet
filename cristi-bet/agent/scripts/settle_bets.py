@@ -4,6 +4,7 @@ Rulat de launchd 4x/zi (via com.cristibet.settle.plist).
 Verifică rezultatele și decontează pariurile OPEN.
 """
 import os, httpx
+from typing import Optional
 from supabase import create_client
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
@@ -51,7 +52,7 @@ def teams_match(bet_event: str, home: str, away: str) -> bool:
     return home.lower() in ev or away.lower() in ev
 
 
-def determine_winner(game: dict) -> str | None:
+def determine_winner(game: dict) -> Optional[str]:  # type: ignore
     scores = game.get("scores") or []
     home   = next((s for s in scores if s["name"] == game["home_team"]), None)
     away   = next((s for s in scores if s["name"] == game["away_team"]), None)
