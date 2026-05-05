@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS cron_jobs (
   name          TEXT NOT NULL,
   schedule      TEXT,
   schedule_kind TEXT,
-  schedule_expr TEXT,
+  schedule_expr TEXT, -- changed from VARCHAR(200) to avoid CHECK constraint
   schedule_minutes INTEGER,
   state         TEXT DEFAULT 'active',
   enabled       BOOLEAN DEFAULT true,

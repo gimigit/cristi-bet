@@ -7,10 +7,9 @@ import { sportLabel } from '@/lib/stats'
 interface Props {
   bet: Bet
   compact?: boolean
-  onDelete?: (id: string) => void
 }
 
-export default function BetCard({ bet, compact = false, onDelete }: Props) {
+export default function BetCard({ bet, compact = false }: Props) {
   const [expanded, setExpanded] = useState(false)
 
   const statusColors: Record<string, string> = {
@@ -81,15 +80,6 @@ export default function BetCard({ bet, compact = false, onDelete }: Props) {
           <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${badge}`}>
             {icon} {bet.status}
           </span>
-          {onDelete && (
-            <button
-              onClick={() => onDelete(bet.id)}
-              className="ml-1 text-xs text-[var(--lost)] hover:text-red-500 transition-colors"
-              title="Șterge pariul"
-            >
-              🗑️
-            </button>
-          )}
         </div>
       </div>
     )
@@ -115,18 +105,9 @@ export default function BetCard({ bet, compact = false, onDelete }: Props) {
           <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${badge}`}>
             {icon} {bet.status}
           </span>
-          {onDelete && (
-            <button
-              onClick={() => onDelete(bet.id)}
-              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-[var(--lost)] hover:text-red-500"
-              title="Șterge pariul"
-            >
-              🗑️
-            </button>
-          )}
         </div>
-      </div>
 
+      </div>
       {/* Meta */}
       <div className="flex items-center justify-between px-4 pb-3 text-xs text-[var(--muted)]">
         <div className="flex items-center gap-3">

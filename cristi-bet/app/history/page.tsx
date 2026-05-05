@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from 'react'
 import { Bet } from '@/lib/types'
 import BetCard from '@/components/BetCard'
@@ -45,21 +47,6 @@ export default function HistoryPage() {
   useEffect(() => {
     fetchBets()
   }, [status, sport])
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Sigur vrei să ștergi acest pariu?')) return
-
-    try {
-      const res = await fetch(`/api/bets/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        setBets((prev) => prev.filter((b) => b.id !== id))
-      } else {
-        alert('Eroare la ștergerea pariului')
-      }
-    } catch (e) {
-      alert('Eroare la ștergerea pariului')
-    }
-  }
 
   const totalPages = Math.max(1, Math.ceil(bets.length / PAGE_SIZE))
   const paginated = bets.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -142,7 +129,7 @@ export default function HistoryPage() {
       ) : (
         <div className="space-y-3">
           {paginated.map((bet) => (
-            <BetCard key={bet.id} bet={bet} onDelete={handleDelete} />
+            <BetCard key={bet.id} bet={bet} />
           ))}
         </div>
       )}

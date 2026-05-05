@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+export const dynamic = 'force-dynamic'
+
+import { useState, useEffect } from 'react'
 
 interface CronJob {
   id: string
