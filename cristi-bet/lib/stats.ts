@@ -1,7 +1,7 @@
 import { Bet, BankrollPoint, Stats, SportStat } from './types'
 
 export function computeStats(bets: Bet[], bankroll: BankrollPoint[]): Stats {
-  const STARTING = parseFloat(process.env.BANKROLL_START ?? '10.00')
+  const STARTING = 10.0
   const settled  = bets.filter(b => b.status !== 'OPEN' && b.status !== 'VOID')
   const wins    = settled.filter(b => b.status === 'WON').length
   const losses  = settled.filter(b => b.status === 'LOST').length
@@ -51,8 +51,8 @@ export function computeStats(bets: Bet[], bankroll: BankrollPoint[]): Stats {
   }
 }
 
-export function formatEur(amount: number): string {
-  return `€${amount >= 0 ? '+' : ''}${amount.toFixed(2)}`
+export function formatRon(amount: number): string {
+  return `RON ${amount >= 0 ? '+' : ''}${amount.toFixed(2)}`
 }
 
 export function formatPct(value: number): string {

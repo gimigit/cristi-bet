@@ -10,7 +10,8 @@ function adminClient() {
 
 function isAuthorized(req: Request) {
   const { searchParams } = new URL(req.url)
-  return searchParams.get('key') === process.env.ADMIN_KEY
+  const key = searchParams.get('key')
+  return key && (key === process.env.ADMIN_KEY || key === process.env.ACCESS_PASSWORD)
 }
 
 // GET — sporturile active

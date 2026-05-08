@@ -31,7 +31,7 @@ def main():
         'odds': 1.0,
         'confidence': 50,
         'stake': 0.0,
-        'status': 'PENDING',
+        'status': 'OPEN',
         'pnl': 0.0,
         'rationale': 'Odds API returned 0 available games - quota exhausted / API unavailable',
         'placed_at': now,

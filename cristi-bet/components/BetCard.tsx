@@ -7,9 +7,10 @@ import { sportLabel } from '@/lib/stats'
 interface Props {
   bet: Bet
   compact?: boolean
+  bankroll?: number
 }
 
-export default function BetCard({ bet, compact = false }: Props) {
+export default function BetCard({ bet, compact = false, bankroll = 10 }: Props) {
   const [expanded, setExpanded] = useState(false)
 
   const statusColors: Record<string, string> = {
@@ -52,7 +53,7 @@ export default function BetCard({ bet, compact = false }: Props) {
       ? 'text-[var(--push)]'
       : 'text-[var(--muted)]'
 
-  const stakePct = ((bet.stake / 10) * 100).toFixed(1)
+  const stakePct = ((bet.stake / bankroll) * 100).toFixed(1)
 
   const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(bet.event + ' ' + bet.selection)}`
 

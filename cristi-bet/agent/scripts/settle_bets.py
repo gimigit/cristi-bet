@@ -21,7 +21,9 @@ if not all([ODDS_API_KEY, SUPABASE_URL, SUPABASE_KEY]):
 db = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # The Odds API sport keys — trebuie să corespundă cu cele din active_sports
+# Mapped by sport OR by league (e.g., "soccer" + "EPL" -> "soccer_epl")
 SPORT_MAP = {
+    # By sport
     "soccer":            "soccer_epl",
     "basketball_nba":    "basketball_nba",
     "basketball":        "basketball_nba",
@@ -31,6 +33,27 @@ SPORT_MAP = {
     "tennis_atp_major": "tennis_atp_major",
     "tennis_wta_major": "tennis_wta_major",
     "mma_mma":          "mma_mma",
+    # By league (more specific)
+    "EPL":               "soccer_epl",
+    "Premier League":    "soccer_epl",
+    "Bundesliga":        "soccer_bundesliga",
+    "La Liga":           "soccer_esp-la-liga",
+    "Serie A":           "soccer_ita-serie-a",
+    "Ligue 1":           "soccer_fra-ligue-1",
+    "NBA":               "basketball_nba",
+    "MLB":               "baseball_mlb",
+    "NHL":               "icehockey_nhl",
+    "NFL":               "americanfootball_nfl",
+}
+
+# League -> sport key mapping
+LEAGUE_TO_SPORT = {
+    "EPL": "soccer_epl",
+    "Premier League": "soccer_epl",
+    "Bundesliga": "soccer_bundesliga",
+    "La Liga": "soccer_esp-la-liga",
+    "Serie A": "soccer_ita-serie-a",
+    "Ligue 1": "soccer_fra-ligue-1",
 }
 
 
@@ -117,7 +140,9 @@ def run():
         if event_dt + timedelta(hours=3) > now:
             continue
 
-        sport_key = SPORT_MAP.get(bet["sport"], bet["sport"])
+        # Try league first, then sport
+        league = bet.get("league", "")
+        sport_key = SPORT_MAP.get(league) or SPORT_MAP.get(bet["sport"]) or bet["sport"]
         if not sport_key:
             print(f"  ⚠️  Unknown sport: {bet['sport']} for {bet['id']}")
             continue
