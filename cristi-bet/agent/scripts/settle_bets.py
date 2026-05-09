@@ -3,7 +3,7 @@ cristi-bet — Bet Settler
 Rulat de launchd 4x/zi (via com.cristibet.settle.plist).
 Verifică rezultatele și decontează pariurile OPEN.
 """
-import os, httpx
+import os, re, httpx
 from typing import Optional
 from supabase import create_client
 from datetime import datetime, timezone, timedelta
@@ -22,18 +22,27 @@ db = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # The Odds API sport keys — trebuie să corespundă cu cele din active_sports
 # Mapped by sport OR by league (e.g., "soccer" + "EPL" -> "soccer_epl")
-SPORT_MAP = {
-    # By sport
-    "soccer":            "soccer_epl",
-    "basketball_nba":    "basketball_nba",
-    "basketball":        "basketball_nba",
-    "baseball_mlb":      "baseball_mlb",
-    "icehockey_nhl":    "icehockey_nhl",
-    "americanfootball_nfl": "americanfootball_nfl",
-    "tennis_atp_major": "tennis_atp_major",
-    "tennis_wta_major": "tennis_wta_major",
-    "mma_mma":          "mma_mma",
-    # By league (more specific)
+SPORT_KEYS = {
+    # Soccer leagues
+    "soccer_epl":                "soccer_gbr_bql",
+    "soccer_bundesliga":         "soccer_deu_bundesliga",
+    "soccer_esp-la-liga":        "soccer_esp_la_liga",
+    "soccer_ita-serie-a":        "soccer_italy_serie_a",  # CORRECT: not soccer_ita-serie_a
+    "soccer_fra-ligue-1":        "soccer_fra_ligue_1",
+    # Major US sports
+    "basketball_nba":            "basketball_nba",
+    "baseball_mlb":              "baseball_mlb",
+    "icehockey_nhl":             "icehockey_nhl",
+    "americanfootball_nfl":      "americanfootball_nfl",
+    # Tennis
+    "tennis_atp_major":          "tennis_grand_slam",
+    "tennis_wta_major":          "tennis_grand_slam_wta",
+    # Combat
+    "mma_mma":                   "mma_mma",
+}
+
+# League display name → sport key (for logging/comparison)
+LEAGUE_TO_SPORT_KEY = {
     "EPL":               "soccer_epl",
     "Premier League":    "soccer_epl",
     "Bundesliga":        "soccer_bundesliga",
@@ -44,16 +53,6 @@ SPORT_MAP = {
     "MLB":               "baseball_mlb",
     "NHL":               "icehockey_nhl",
     "NFL":               "americanfootball_nfl",
-}
-
-# League -> sport key mapping
-LEAGUE_TO_SPORT = {
-    "EPL": "soccer_epl",
-    "Premier League": "soccer_epl",
-    "Bundesliga": "soccer_bundesliga",
-    "La Liga": "soccer_esp-la-liga",
-    "Serie A": "soccer_ita-serie-a",
-    "Ligue 1": "soccer_fra-ligue-1",
 }
 
 
@@ -70,9 +69,22 @@ def fetch_scores(sport_key: str) -> list:
         return []
 
 
+def _tokens(text: str) -> set[str]:
+    """Split text into normalized tokens for safe comparison."""
+    return {t.strip().lower() for t in re.split(r'[^a-z0-9]+', text.lower()) if t.strip()}
+
 def teams_match(bet_event: str, home: str, away: str) -> bool:
-    ev = bet_event.lower()
-    return home.lower() in ev or away.lower() in ev
+    """
+    Strict team match: both teams must appear as distinct tokens in the event string.
+    This prevents 'Man Utd' from matching 'Manchester United Reserves'.
+    """
+    ev_tokens = _tokens(bet_event)
+    home_tokens = _tokens(home)
+    away_tokens = _tokens(away)
+    # Both team names must appear with at least 2 tokens each (avoid single-char noise)
+    home_ok = len(home_tokens) >= 1 and home_tokens.issubset(ev_tokens)
+    away_ok = len(away_tokens) >= 1 and away_tokens.issubset(ev_tokens)
+    return home_ok and away_ok
 
 
 def determine_winner(game: dict) -> Optional[str]:  # type: ignore
@@ -140,14 +152,13 @@ def run():
         if event_dt + timedelta(hours=3) > now:
             continue
 
-        # Try league first, then sport
-        league = bet.get("league", "")
-        sport_key = SPORT_MAP.get(league) or SPORT_MAP.get(bet["sport"]) or bet["sport"]
-        if not sport_key:
-            print(f"  ⚠️  Unknown sport: {bet['sport']} for {bet['id']}")
-            continue
+        # Resolve to The Odds API key: league -> sport_key -> API key
+        league   = bet.get("league", "")
+        sport_key = LEAGUE_TO_SPORT_KEY.get(league) or bet["sport"]
+        api_key   = SPORT_KEYS.get(sport_key, sport_key)  # fallback to raw key
 
-        for game in fetch_scores(sport_key):
+        # Fetch scores using the real API key
+        for game in fetch_scores(api_key):
             if not game.get("completed"):
                 continue
             if teams_match(bet["event"], game["home_team"], game["away_team"]):

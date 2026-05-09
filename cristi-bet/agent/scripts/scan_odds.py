@@ -23,11 +23,32 @@ OPENAI_BASE    = os.environ.get("OPENAI_API_BASE", "http://127.0.0.1:7352/v1")
 OPENAI_KEY     = os.environ.get("OPENAI_API_KEY", "not-needed")
 OPENAI_MODEL   = os.environ.get("OPENAI_MODEL", "claude-sonnet-4-7")
 
-BANKROLL_START  = 10.0
-MAX_STAKE_PCT   = 0.10
-ODDS_MIN        = 1.70
-ODDS_MAX        = 2.80
+MAX_STAKE_PCT    = 0.10
+ODDS_MIN         = 1.70
+ODDS_MAX         = 2.80
 MAX_EXPOSURE_PCT = 0.60
+
+# Lazy-loaded from config DB (fallback default for safety)
+_bankroll_start_cache: float | None = None
+
+def get_bankroll_start() -> float:
+    """Single source of truth for starting bankroll — read from config DB."""
+    global _bankroll_start_cache
+    if _bankroll_start_cache is not None:
+        return _bankroll_start_cache
+    try:
+        r = db.table("config").select("value").eq("key", "bankroll_start").execute()
+        if r.data:
+            raw = r.data[0]["value"]
+            _bankroll_start_cache = float(raw) if isinstance(raw, (int, float)) else float(raw)
+        else:
+            _bankroll_start_cache = 10.0
+    except Exception:
+        _bankroll_start_cache = 10.0
+    return _bankroll_start_cache
+
+# Legacy constant kept for backwards compat (scripts that import directly)
+BANKROLL_START = get_bankroll_start()
 
 if not all([ODDS_API_KEY, SUPABASE_URL, SUPABASE_KEY]):
     raise RuntimeError("Missing required env vars — check .env.local")
@@ -53,7 +74,7 @@ def get_active_sports() -> list[str]:
 def get_bankroll() -> float:
     r = db.table("bankroll_history").select("balance") \
         .order("recorded_at", desc=True).limit(1).execute()
-    return float(r.data[0]["balance"]) if r.data else BANKROLL_START
+    return float(r.data[0]["balance"]) if r.data else get_bankroll_start()
 
 
 def get_open_exposure() -> float:
@@ -70,12 +91,35 @@ def get_next_id() -> str:
 # Validare — protecție anti-halucinare AI
 # ─────────────────────────────────────────────
 
+# Valid API sport keys (The Odds API) — used for AI response validation
+VALID_SPORT_KEYS = {
+    # Soccer
+    "soccer_gbr_bql", "soccer_deu_bundesliga", "soccer_esp_la_liga",
+    "soccer_italy_serie_a", "soccer_fra_ligue_1",
+    "soccer_uefa_champs", "soccer_uefa_euro", "soccer_fifa_world",
+    # US sports
+    "basketball_nba", "basketball_wnba", "basketball_ncaab",
+    "baseball_mlb", "icehockey_nhl", "americanfootball_nfl",
+    # Tennis
+    "tennis_grand_slam", "tennis_grand_slam_wta",
+    # Combat
+    "mma_mma", "boxing_boxing",
+    # Others
+    "esports_league_of_legends", "esports_csgo",
+}
+
+
 def validate_bet(result: dict, max_stake: float) -> tuple[bool, str]:
     required = ["event", "selection", "sport", "league", "market",
                 "event_date", "odds", "stake", "confidence", "rationale"]
     for field in required:
         if field not in result or result[field] is None or result[field] == "":
             return False, f"Missing or empty field: {field}"
+
+    # ── Sport key validation ──
+    sport = str(result["sport"])
+    if sport not in VALID_SPORT_KEYS:
+        return False, f"Unknown sport_key '{sport}' — must be a valid The Odds API key"
 
     try:
         odds = float(result["odds"])
@@ -188,7 +232,11 @@ RULES:
 - It is ALWAYS better to skip than to force a marginal bet.
 - Never bet on a team/event you've already bet on in an open position.
 - league must be a real competition name (e.g. "UEFA Champions League", "NBA", "Premier League").
-- sport must be the API sport key (e.g. "soccer", "basketball_nba", "icehockey_nhl").
+- sport must be a VALID The Odds API key:
+  - Soccer: "soccer_gbr_bql" (EPL), "soccer_deu_bundesliga", "soccer_esp_la_liga", "soccer_italy_serie_a", "soccer_fra_ligue_1"
+  - NBA: "basketball_nba" | NFL: "americanfootball_nfl" | MLB: "baseball_mlb" | NHL: "icehockey_nhl"
+  - Tennis: "tennis_grand_slam" (ATP) or "tennis_grand_slam_wta" (WTA)
+  - MMA: "mma_mma"
 
 Respond ONLY with valid JSON (no markdown, no backticks):
 {{

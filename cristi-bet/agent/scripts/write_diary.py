@@ -23,7 +23,26 @@ if not all([SUPABASE_URL, SUPABASE_KEY]):
 db      = create_client(SUPABASE_URL, SUPABASE_KEY)
 client  = OpenAI(base_url=OPENAI_BASE, api_key=OPENAI_KEY)
 
-BANKROLL_START = 10.0
+# Lazy-loaded from config DB
+_bankroll_start_cache: float | None = None
+
+def get_bankroll_start() -> float:
+    """Single source of truth — read from config DB."""
+    global _bankroll_start_cache
+    if _bankroll_start_cache is not None:
+        return _bankroll_start_cache
+    try:
+        r = db.table("config").select("value").eq("key", "bankroll_start").execute()
+        if r.data:
+            raw = r.data[0]["value"]
+            _bankroll_start_cache = float(raw) if isinstance(raw, (int, float)) else float(raw)
+        else:
+            _bankroll_start_cache = 10.0
+    except Exception:
+        _bankroll_start_cache = 10.0
+    return _bankroll_start_cache
+
+BANKROLL_START = get_bankroll_start()
 
 
 def get_yesterday_bets() -> list:
@@ -40,7 +59,7 @@ def get_yesterday_bets() -> list:
 def get_current_bankroll() -> float:
     r = db.table("bankroll_history").select("balance") \
         .order("recorded_at", desc=True).limit(1).execute()
-    return float(r.data[0]["balance"]) if r.data else BANKROLL_START
+    return float(r.data[0]["balance"]) if r.data else get_bankroll_start()
 
 
 def get_open_bets_count() -> int:
