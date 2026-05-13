@@ -38,3 +38,12 @@ logs/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python virtual environments
+agent/.venv/
+agent/.venv311/
+agent/__pycache__/
+
+# Temp/supabase
+supabase/.temp/
+.env.local
