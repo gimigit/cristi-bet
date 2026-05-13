@@ -8,6 +8,7 @@ Inspirat de ProphetAI original (Reddit):
 - Cost: ~$0.10-0.20 per apel pe Opus
 """
 import os, json, httpx
+from typing import Optional
 from openai import OpenAI
 from supabase import create_client
 from datetime import datetime, timezone
@@ -29,7 +30,7 @@ ODDS_MAX         = 2.80
 MAX_EXPOSURE_PCT = 0.60
 
 # Lazy-loaded from config DB (fallback default for safety)
-_bankroll_start_cache: float | None = None
+_bankroll_start_cache: Optional[float] = None
 
 def get_bankroll_start() -> float:
     """Single source of truth for starting bankroll — read from config DB."""

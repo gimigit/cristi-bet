@@ -3,7 +3,9 @@ cristi-bet — Daily Diary Writer
 Rulat de launchd o dată pe zi la 09:00 (via com.cristibet.diary.plist).
 Claude Sonnet scrie un rezumat narativ zilnic.
 """
+from __future__ import annotations
 import os, json
+from typing import Optional
 from openai import OpenAI
 from supabase import create_client
 from datetime import datetime, timezone, timedelta
@@ -24,7 +26,7 @@ db      = create_client(SUPABASE_URL, SUPABASE_KEY)
 client  = OpenAI(base_url=OPENAI_BASE, api_key=OPENAI_KEY)
 
 # Lazy-loaded from config DB
-_bankroll_start_cache: float | None = None
+_bankroll_start_cache: Optional[float] = None
 
 def get_bankroll_start() -> float:
     """Single source of truth — read from config DB."""

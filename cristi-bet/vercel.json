@@ -1,6 +1,5 @@
 {
   "buildCommand": "npm run build",
-  "installCommand": "npm install",
   "framework": "nextjs",
-  "runtime": "nodejs18.x"
+  "regions": ["fra1"]
 }
