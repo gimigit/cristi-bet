@@ -1,0 +1,6 @@
+# Exclude agent (Python scripts, venvs) — not needed for Next.js frontend
+agent/
+logs/
+supabase/.temp/
+node_modules/.cache/
+.next/cache/
