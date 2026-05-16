@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cristi-Bet
+
+AI-powered sports betting tracker. Live on [cristi-bet.vercel.app](https://cristi-bet.vercel.app)
 
 ## Getting Started
 
