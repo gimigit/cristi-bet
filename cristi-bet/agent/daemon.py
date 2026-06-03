@@ -54,15 +54,13 @@ signal.signal(signal.SIGINT, graceful_shutdown)
 
 
 def execute_scan():
-    log.info("=== SCAN ODDS ===")
+    log.info("=== SCAN ODDS (SCOUT MODE) ===")
     start = time.time()
     try:
         bankroll = get_bankroll()
         exposure = get_open_exposure()
         available = bankroll - exposure
         log.info(f"Bankroll: €{bankroll:.2f} | Expunere: €{exposure:.2f} | Disponibil: €{available:.2f}")
-        if available < 5:
-            log.warning("Bankroll insuficient pentru pariuri.")
         sports = get_active_sports()
         log.info(f"Sporturi active: {len(sports)}")
         all_games = []
@@ -77,29 +75,42 @@ def execute_scan():
                 log.error(f"  Eroare la {sport}: {e}")
         if not all_games:
             log.info("Niciun meci cu valoare. SKIP.")
-            db.table('betting_records_raw').insert({
-                'source': 'daemon_scan',
-                'raw_data': json.dumps({'action':'skip','reason':'no_value','timestamp':datetime.now().isoformat()})
-            }).execute()
+            log_scan("skip", 0, reason="no_value")
             return
         all_games.sort(key=lambda g: max(g['odds'].values()), reverse=True)
-        placed = 0
+        submitted = 0
         for game in all_games[:5]:
             best_team = max(game['odds'], key=game['odds'].get)
             best_odds = game['odds'][best_team]
+            confidence = 7 if best_odds <= 2.0 else 6 if best_odds <= 2.5 else 5
             stake = round(min(available * 0.10, bankroll * 0.05), 2)
             if stake < 1:
                 continue
+            rationale = (
+                f"AI scout: {best_team} are cota {best_odds} in meciul {game['event']}. "
+                f"Probabilitate implicita {round(1/best_odds*100,1)}%. "
+                f"Meciul a fost selectat din {game.get('league','unknown')}."
+            )
             try:
-                place_bet(event=game['event'], selection=best_team, odds=best_odds,
-                          stake=stake, sport=game['sport'], league=game.get('league','unknown'),
-                          bookmaker=game.get('bookmaker','odds-api'))
-                log.info(f"Pariat: {game['event']} -> {best_team} @ {best_odds} (€{stake})")
-                placed += 1
+                submit_scout_bet(
+                    event=game['event'],
+                    selection=best_team,
+                    odds=best_odds,
+                    stake=stake,
+                    sport=game['sport'],
+                    league=game.get('league', 'unknown'),
+                    market='h2h',
+                    event_date=game.get('commence', ''),
+                    confidence=confidence,
+                    rationale=rationale,
+                )
+                log.info(f"Scout trimis: {game['event']} -> {best_team} @ {best_odds} (€{stake})")
+                submitted += 1
                 available -= stake
             except Exception as e:
-                log.error(f"Eroare pariu {game['event']}: {e}")
-        log.info(f"SCAN complet in {time.time()-start:.1f}s — {placed} pariuri")
+                log.error(f"Eroare submit scout {game['event']}: {e}")
+        log.info(f"SCAN complet in {time.time()-start:.1f}s — {submitted} recomandari trimise")
+        log_scan("ok", len(all_games))
     except Exception as e:
         log.error(f"Eroare SCAN: {e}\n{traceback.format_exc()}")
 

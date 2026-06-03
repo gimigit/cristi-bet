@@ -118,6 +118,33 @@ def sport_key_to_league(sport_key: str) -> str:
 
 # ─── Bets ───
 
+def submit_scout_bet(event: str, selection: str, sport: str, league: str, market: str,
+              event_date: str, odds: float, confidence: int, stake: float,
+              rationale: str) -> Optional[int]:
+    """Trimite o recomandare in pending_bets. Tu decizi daca o accepti."""
+    try:
+        r = db.table("pending_bets").insert({
+            "sport": sport,
+            "event_name": event,
+            "selection": selection,
+            "league": league,
+            "market": market,
+            "match_date": event_date,
+            "odds": round(odds, 2),
+            "confidence": confidence,
+            "stake": round(stake, 2),
+            "reason": rationale,
+            "category": "scout",
+            "source": "cristi-bet",
+            "status": "pending",
+        }).execute()
+        pending_id = r.data[0]["id"] if r.data else None
+        print(f"  📤 Recomandare trimisa ID {pending_id}: {selection} @ {odds}")
+        return pending_id
+    except Exception as e:
+        print(f"  ❌ Eroare trimitere recomandare: {e}")
+        return None
+
 def place_bet(event: str, selection: str, sport: str, league: str, market: str,
               event_date: str, odds: float, confidence: int, stake: float,
               rationale: str) -> Optional[str]:
@@ -143,6 +170,26 @@ def place_bet(event: str, selection: str, sport: str, league: str, market: str,
     except Exception as e:
         print(f"  ❌ Failed to place bet {bet_id}: {e}")
         return None
+
+def settle_result(bet_id: str, outcome: str, amount: float):
+    """Settle a bet (mark as won/lost and update bankroll)."""
+    try:
+        status = 'WON' if outcome == 'won' else 'LOST'
+        db.table("bets").update({
+            "status": status,
+            "settled_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", bet_id).execute()
+        if outcome == 'won' and amount > 0:
+            balance = get_bankroll()
+            db.table("bankroll_history").insert({
+                "balance": balance + amount,
+                "change": amount,
+                "reason": f"Settle {bet_id}",
+                "recorded_at": datetime.now(timezone.utc).isoformat(),
+            }).execute()
+        print(f"  ✅ Bet {bet_id} settled as {status}")
+    except Exception as e:
+        print(f"  ❌ Failed to settle {bet_id}: {e}")
 
 # ─── Scans ───
 

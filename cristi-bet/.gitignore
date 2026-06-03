@@ -47,3 +47,8 @@ agent/__pycache__/
 # Temp/supabase
 supabase/.temp/
 .env.local
+
+# daemon
+daemon.pid
+agent/scripts/__pycache__/
+agent/**/__pycache__/
